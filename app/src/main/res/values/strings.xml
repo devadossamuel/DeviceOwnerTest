@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">InstallTest</string>
+    <string name="admin_enabled">Admin enabled</string>
+    <string name="warning_admin_deactivation">Admin disable requested</string>
+    <string name="admin_disabled">Admin disabled</string>
+    <string name="pwd_changed">Pwd changed</string>
+    <string name="pwd_fail">Pwd fail</string>
+    <string name="pwd_success">Pwd success</string>
+    <string name="enterprise_device_admin">Admin Receiver</string>
+    <string name="enterprise_device_admin_description">Admin Receiver description</string>
+</resources>
