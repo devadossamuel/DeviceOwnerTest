@@ -1,32 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/install"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Install" />
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/uninstall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Uninstall" />
+        <Button
+            android:id="@+id/removeOwner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RemoveOwner" />
 
-    <Button
-        android:id="@+id/enableFactory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Enable Factory Reset" />
+        <Button
+            android:id="@+id/install"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Install" />
 
-    <Button
-        android:id="@+id/disableFactory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Disable Factory Reset" />
+        <Button
+            android:id="@+id/uninstall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Uninstall" />
 
-</LinearLayout>
+        <Button
+            android:id="@+id/enableFactory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enable Factory Reset" />
+
+        <Button
+            android:id="@+id/disableFactory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Disable Factory Reset" />
+
+        <Button
+            android:id="@+id/setProxy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set Proxy" />
+
+        <Button
+            android:id="@+id/isProxySet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Is proxy set" />
+
+        <Button
+            android:id="@+id/removeProxy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Remove proxy" />
+
+    </LinearLayout>
+
+</ScrollView>

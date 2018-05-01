@@ -1,6 +1,7 @@
 package com.mdgd.installtest;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
@@ -10,19 +11,21 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.os.UserManager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -50,11 +53,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        findViewById(R.id.removeOwner).setOnClickListener(this);
         findViewById(R.id.install).setOnClickListener(this);
         findViewById(R.id.uninstall).setOnClickListener(this);
 
         findViewById(R.id.enableFactory).setOnClickListener(this);
         findViewById(R.id.disableFactory).setOnClickListener(this);
+
+        findViewById(R.id.setProxy).setOnClickListener(this);
+        findViewById(R.id.isProxySet).setOnClickListener(this);
+        findViewById(R.id.removeProxy).setOnClickListener(this);
 
         requestAdmin();
     }
@@ -103,11 +112,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             System.out.println(dataDir.getAbsolutePath());
             installPackage(this, "com.my.tefilathaderch", "/storage/emulated/0/Android/data/com.mdgd.installtest/cache/tefilathaderch.apk");
         }
+        else if(R.id.removeOwner == id){
+            getDpm().clearDeviceOwnerApp(getPackageName());
+        }
         else if(R.id.uninstall == id){
             uninstallPackage(this, "com.appstore");
         }
         else if(R.id.enableFactory == id) {
-            DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+            DevicePolicyManager dpm = getDpm();
             if (dpm == null){
                 Toast.makeText(this, "DPM is null", Toast.LENGTH_SHORT).show();
             }
@@ -116,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
         else if(R.id.disableFactory == id){
-            DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+            DevicePolicyManager dpm = getDpm();
             if (dpm == null){
                 Toast.makeText(this, "DPM is null", Toast.LENGTH_SHORT).show();
             }
@@ -124,6 +136,98 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 dpm.clearUserRestriction(getAdminComponent(), UserManager.DISALLOW_FACTORY_RESET);
             }
         }
+        else if(R.id.setProxy == id){
+            final DevicePolicyManager dpm = getDpm();
+            final Method m = getSetGlobalProxyMethod();
+            if(m != null){
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            m.invoke(dpm, getAdminComponent(), new Proxy(Proxy.Type.HTTP, new InetSocketAddress("159.203.84.241", 3128)), new ArrayList<>());
+                        } catch (Throwable e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+            }
+        }
+        else if(R.id.removeProxy == id){
+            final DevicePolicyManager dpm = getDpm();
+            final Method m = getSetGlobalProxyMethod();
+            if(m != null){
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                m.invoke(dpm, getAdminComponent(), Proxy.NO_PROXY, new ArrayList<>());
+                            } catch (Throwable e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }).start();
+            }
+        }
+        else if(R.id.isProxySet == id){
+            ActivityManager amService = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
+            try {
+                // clearApplicationUserData [class java.lang.String, interface android.content.pm.IPackageDataObserver, int]
+                int uid = 0;
+                try {
+                    uid = this.getPackageManager().getApplicationInfo("com.mutham", 0).uid;
+                } catch (PackageManager.NameNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+                Class cls = Class.forName("android.app.ActivityManagerNative");
+                Method method = cls.getDeclaredMethod("getDefault");
+                Object amNative = method.invoke(cls);
+                method = amNative.getClass().getMethod("clearApplicationUserData", String.class, Class.forName("android.content.pm.IPackageDataObserver"), int.class);
+                method.invoke(amNative, "com.mutham", null, uid);
+//                for (Method m : methods){
+//                    Log.d("TEST", "M " + m.getName() + " " + Arrays.toString(m.getParameterTypes()));
+//                }
+//                Method method = ActivityManager.class.getDeclaredMethod("clearApplicationUserData", String.class, Class.forName("android.content.pm.IPackageDataObserver"));
+//                method.invoke(amService, "com.mutham", null);
+            }
+            catch (Throwable e){
+                e.printStackTrace();
+            }
+//            DevicePolicyManager dpm = getDpm();
+//            Method[] declaredMethods = DevicePolicyManager.class.getDeclaredMethods();
+//            Method m = null;
+//            int size = declaredMethods.length;
+//            for(int i = 0; i < size; i++){
+//                if("getGlobalProxyAdmin".equals(declaredMethods[i].getName())){
+//                    m = declaredMethods[i];
+//                    break;
+//                }
+//            }
+//            if(m != null){
+//                try {
+//                    Object adminComponent = m.invoke(dpm);
+//                    if(adminComponent != null){
+//                        System.out.println(adminComponent);
+//                    }
+//                }
+//                catch (Throwable e){
+//                    e.printStackTrace();
+//                }
+//            }
+        }
+    }
+
+    private Method getSetGlobalProxyMethod(){
+        Method[] declaredMethods = DevicePolicyManager.class.getDeclaredMethods();
+        Method m = null;
+        int size = declaredMethods.length;
+        for(int i = 0; i < size; i++){
+            if("setGlobalProxy".equals(declaredMethods[i].getName())){
+                m = declaredMethods[i];
+                break;
+            }
+        }
+        return m;
     }
 
     private boolean uninstallPackage(Context context, String packageName) {
