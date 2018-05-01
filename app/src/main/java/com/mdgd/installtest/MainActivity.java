@@ -13,6 +13,7 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.UserManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int DEVICE_ADMIN_ADD_RESULT_ENABLE = 1201;
+    private static final int R_CODE = 1202;
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -64,6 +66,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.setProxy).setOnClickListener(this);
         findViewById(R.id.isProxySet).setOnClickListener(this);
         findViewById(R.id.removeProxy).setOnClickListener(this);
+
+        findViewById(R.id.cleardata1).setOnClickListener(this);
+        findViewById(R.id.cleardata2).setOnClickListener(this);
 
         requestAdmin();
     }
@@ -169,51 +174,59 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
         else if(R.id.isProxySet == id){
-            ActivityManager amService = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
-            try {
-                // clearApplicationUserData [class java.lang.String, interface android.content.pm.IPackageDataObserver, int]
-                int uid = 0;
+            DevicePolicyManager dpm = getDpm();
+            Method[] declaredMethods = DevicePolicyManager.class.getDeclaredMethods();
+            Method m = null;
+            int size = declaredMethods.length;
+            for(int i = 0; i < size; i++){
+                if("getGlobalProxyAdmin".equals(declaredMethods[i].getName())){
+                    m = declaredMethods[i];
+                    break;
+                }
+            }
+            if(m != null){
                 try {
-                    uid = this.getPackageManager().getApplicationInfo("com.mutham", 0).uid;
-                } catch (PackageManager.NameNotFoundException e) {
+                    Object adminComponent = m.invoke(dpm);
+                    if(adminComponent != null){
+                        System.out.println(adminComponent);
+                    }
+                }
+                catch (Throwable e){
                     e.printStackTrace();
                 }
+            }
+        }
+        else if(R.id.cleardata1 == id){
+            if(checkSelfPermission("android.permission.CLEAR_APP_USER_DATA") != PackageManager.PERMISSION_GRANTED){
+                ActivityCompat.requestPermissions(this, new String[]{"android.permission.CLEAR_APP_USER_DATA"}, R_CODE);
+            }
+            ActivityManager amService = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
+            try {
+                Method method = ActivityManager.class.getDeclaredMethod("clearApplicationUserData", String.class, Class.forName("android.content.pm.IPackageDataObserver"));
+                method.invoke(amService, "com.mutham", null);
+            }
+            catch (Throwable e){
+                e.printStackTrace();
+            }
+        }
+        else if(R.id.cleardata2 == id){
+            try {
+                if(checkSelfPermission("android.permission.INTERACT_ACROSS_USERS_FULL") != PackageManager.PERMISSION_GRANTED){
+                    ActivityCompat.requestPermissions(this, new String[]{"android.permission.INTERACT_ACROSS_USERS_FULL"}, R_CODE);
+                }
+                int uid = getPackageManager().getApplicationInfo("com.mutham", 0).uid;
 
                 Class cls = Class.forName("android.app.ActivityManagerNative");
                 Method method = cls.getDeclaredMethod("getDefault");
                 Object amNative = method.invoke(cls);
                 method = amNative.getClass().getMethod("clearApplicationUserData", String.class, Class.forName("android.content.pm.IPackageDataObserver"), int.class);
                 method.invoke(amNative, "com.mutham", null, uid);
-//                for (Method m : methods){
+//                for (Method m : methods) {
 //                    Log.d("TEST", "M " + m.getName() + " " + Arrays.toString(m.getParameterTypes()));
 //                }
-//                Method method = ActivityManager.class.getDeclaredMethod("clearApplicationUserData", String.class, Class.forName("android.content.pm.IPackageDataObserver"));
-//                method.invoke(amService, "com.mutham", null);
-            }
-            catch (Throwable e){
+            }catch (Throwable e){
                 e.printStackTrace();
             }
-//            DevicePolicyManager dpm = getDpm();
-//            Method[] declaredMethods = DevicePolicyManager.class.getDeclaredMethods();
-//            Method m = null;
-//            int size = declaredMethods.length;
-//            for(int i = 0; i < size; i++){
-//                if("getGlobalProxyAdmin".equals(declaredMethods[i].getName())){
-//                    m = declaredMethods[i];
-//                    break;
-//                }
-//            }
-//            if(m != null){
-//                try {
-//                    Object adminComponent = m.invoke(dpm);
-//                    if(adminComponent != null){
-//                        System.out.println(adminComponent);
-//                    }
-//                }
-//                catch (Throwable e){
-//                    e.printStackTrace();
-//                }
-//            }
         }
     }
 
